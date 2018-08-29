@@ -1,0 +1,73 @@
+*** Settings ***
+Suite Setup       清除数据
+Suite Teardown
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/Login.py
+Variables         ../../LibY/Tzjconfig.py
+Library           json
+Library           ExcelLibrary
+Library           Collections
+Library           RequestsLibrary
+Library           ../../LibY/TzjTools.py
+
+*** Variables ***
+${sheet}          4    # 测试数据在excel的tab
+${url}            /account/autobuy    # 接口后半部分
+
+*** Test Cases ***
+account_autobuy_001_未登录
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    1
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    ${expect_value}=    Convert To Integer    ${expect_value}
+    log    *************查看用户:未登录*****************
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_code    ${expect_value}    ${excel_data}    ${sheet}    1
+
+account_autobuy_002_未设置
+    log    ++++++++++++比较预期值、实际值++++++++++
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    2
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    2
+
+account_autobuy_003_自定义购买_所有月份都勾选_账户保留金额为0_余额为0
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    3
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    3
+
+account_autobuy_004_最大份数购买_勾选部分月份_账户保留金额>0_余额>0
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    4
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    4
+
+*** Keywords ***
+清除数据
+    delete_excel_columnValue    ${excel_data}    ${sheet}    8
+    delete_excel_columnValue    ${excel_data}    ${sheet}    7

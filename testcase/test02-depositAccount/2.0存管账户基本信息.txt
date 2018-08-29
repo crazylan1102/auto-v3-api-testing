@@ -1,0 +1,103 @@
+*** Settings ***
+Suite Setup       清除数据
+Suite Teardown
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/Login.py
+Variables         ../../LibY/Tzjconfig.py
+Library           json
+Library           ExcelLibrary
+Library           Collections
+Library           RequestsLibrary
+Library           ../../LibY/TzjTools.py
+
+*** Variables ***
+${sheet}          0    # 测试数据在excel的tab
+${url}            /deposit/account    # 接口后半部分
+
+*** Test Cases ***
+account_info_001_未登录
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    1
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    ${expect_value}=    Convert To Integer    ${expect_value}
+    log    *************查看用户:未登录*****************
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_code    ${expect_value}    ${excel_data}    ${sheet}    1
+
+account_info_002_绑定卡、已签约、批量开户、已设置交易密码、已评测、稳定型
+    log    ++++++++++++比较预期值、实际值++++++++++
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    2
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    2
+
+account_info_003_绑定卡、已签约、批量开户、已设置交易密码、已评测、稳健型
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    3
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    3
+    log    ++++++++++++++++++++++++比较数据库、实际值++++++++++++++++++++++++    #从数据库获取数据结果，生成字典
+    log    *************获取数据库查询结果1*****************
+    ${username}=    Catenate    SEPARATOR=    '    ${uid}    '
+    ${sql1}=    Catenate    SELECT uid,cert_no,card_no,name,mobile,(CASE bind_bank_card_flag WHEN 1 THEN 'True'    WHEN 0 THEN    'False'    ELSE 'null' END) bind_bank_card_flag,(CASE password_flag WHEN 1 THEN 'True' WHEN 0 THEN 'False' ELSE \    'null' END ) password_flag,(CASE is_from_upgrade WHEN 1 THEN 'True' WHEN 0 THEN 'False' \ ELSE 'null' END ) is_from_upgrade FROM tzj_deposit_account.account WHERE uid=
+    ...    ${username}
+    log    ${sql1}
+    ${result1}=    query_sqlstring    tzj_deposit_account    ${sql1}
+    log    ${result1}
+    log    *************获取数据库查询结果2*****************
+    ${sql2}=    Catenate    select (case (select count(*) as num \ from tzj_deposit_sign.user_sign where uid=    ${username}    and bid_status='having') WHEN 1 THEN 'True' ELSE 'False' END )
+    log    ${sql2}
+    ${result2}=    query_sqlstring    tzj_deposit_account    ${sql2}
+    log    ${result2}
+    log    *************拼接数据库查询结果1和2，组成list*****************
+    ${values}=    create_keys_list    ${result1}    ${result2}
+    log    ${values}
+    log    *************拼接数据库查询结果1和2list结果的key列表*****************
+    ${keys}=    Create List    uid    certNo    cardNo    name    mobile
+    ...    hasBankCard    hasTradePwd    isFromUpgrade    agreementSigned
+    log    ${keys}
+    log    *************形成数据库查询结果字典*****************
+    ${sql_result_dict}=    create_sql_result_dict    ${keys}    ${values}
+    log    *************比较接口结果字典是否包含数据库查询结果字典*****************
+    ${sql_result}=    check_B_contains_A    ${sql_result_dict}    ${real_json}
+
+account_info_004_未绑定卡、未已签约、未批量开户、未设置交易密码、未评测
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    4
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    4
+
+测试发标
+    Comment    测试发标
+    Senddebt
+
+测试修改标的计息时间
+    ${debtid}=    Catenate    SEPARATOR=    "    20180514091    "
+    update_debtId_calculate_time    ${debtid}
+
+*** Keywords ***
+清除数据
+    delete_excel_columnValue    ${excel_data}    ${sheet}    8
+    delete_excel_columnValue    ${excel_data}    ${sheet}    7

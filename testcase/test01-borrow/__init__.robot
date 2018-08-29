@@ -1,0 +1,16 @@
+*** Settings ***
+Suite Setup       设置excel_data全局变量
+Suite Teardown    测试另存结果文件到result_history
+Test Setup
+Metadata          \    ${EMPTY}
+Metadata          \    ${EMPTY}
+Library           ../../LibY/TzjTestLib.py
+
+*** Variables ***
+
+*** Keywords ***
+测试另存结果文件到result_history
+    save_excel_name_Time    ${excel_data}    ${CURDIR}
+
+设置excel_data全局变量
+    Set Global Variable    ${excel_data}    ${CURDIR}\\borrower.xls

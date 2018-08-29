@@ -1,0 +1,15 @@
+*** Settings ***
+Suite Setup       设置全局变量excel_data
+Suite Teardown    测试另存结果文件到result_history文件夹
+Library           ../../LibY/TzjTestLib.py
+
+*** Variables ***
+
+*** Keywords ***
+测试另存结果文件到result_history文件夹
+    save_excel_name_Time    ${excel_data}    ${CURDIR}
+    [Teardown]
+
+设置全局变量excel_data
+    Set Global Variable    ${excel_data}    ${CURDIR}\\account.xls
+    [Teardown]

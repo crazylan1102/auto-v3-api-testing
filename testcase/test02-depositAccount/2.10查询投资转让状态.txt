@@ -1,0 +1,57 @@
+*** Settings ***
+Suite Setup       清除数据
+Suite Teardown
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/Login.py
+Variables         ../../LibY/Tzjconfig.py
+Library           json
+Library           ExcelLibrary
+Library           Collections
+Library           RequestsLibrary
+Library           ../../LibY/TzjTools.py
+
+*** Variables ***
+${sheet}          10    # 测试数据在excel的tab
+${url}            /deposit/invest_transfer/%(type)s    # 接口后半部分
+
+*** Test Cases ***
+invest_status_001_投资中
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    1
+    &{expect_value}    To Json    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_response_body    status    &{expect_value}[status]    ${excel_data}    ${sheet}    2
+
+invest_status_002_还款中
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    2
+    &{expect_value}    To Json    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_response_body    status    &{expect_value}[status]    ${excel_data}    ${sheet}    1
+
+invest_status_003_已还款
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    3
+    &{expect_value}    To Json    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_response_body    status    &{expect_value}[status]    ${excel_data}    ${sheet}    3
+
+*** Keywords ***
+清除数据
+    delete_excel_columnValue    ${excel_data}    ${sheet}    8
+    delete_excel_columnValue    ${excel_data}    ${sheet}    7

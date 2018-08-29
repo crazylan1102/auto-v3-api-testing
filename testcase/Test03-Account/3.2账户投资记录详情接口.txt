@@ -1,0 +1,188 @@
+*** Settings ***
+Suite Setup       清除数据
+Suite Teardown
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/Login.py
+Variables         ../../LibY/Tzjconfig.py
+Library           json
+Library           ExcelLibrary
+Library           Collections
+Library           RequestsLibrary
+Library           ../../LibY/TzjTools.py
+
+*** Variables ***
+${sheet}          2    # 测试数据在excel的tab
+${url}            /account/invests/%(investId)s    # 接口后半部分
+
+*** Test Cases ***
+invest_details_001_未登录
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    1
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    ${expect_value}=    Convert To Integer    ${expect_value}
+    log    *************查看用户:未登录*****************
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}
+    log    ${res}
+    log    *************断言*****************
+    check_code    ${expect_value}    ${excel_data}    ${sheet}    1
+
+invest_details_002_未用券-PC端
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    2
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    2
+
+invest_details_003_加息券-android
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    3
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    3
+
+invest_details_004_投资券-wap端
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    4
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    4
+
+invest_details_005_红包-ios
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    5
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    5
+
+invest_details_006_新手标
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    6
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    6
+
+invest_details_007_转让标
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    7
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    7
+
+invest_details_008_未满标
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    8
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    8
+
+invest_details_009_天标—使用了加息券
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    9
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    9
+
+invest_details_010_企业标
+    ${datas}    Read Excel Row    ${excel_data}    ${sheet}    10
+    ${uid}=    Set Variable    ${datas[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${datas[6]}    #获取预期结果
+    ${data}=    Set Variable    ${datas[4]}
+    log    *************查看用户:未登录*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${url}=    catenate_url    ${url}    ${data}
+    log    ${url}
+    ${res}    Senddata    url=${url}    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************实际值转换为json格式*****************
+    ${real_json}    To Json    ${res}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    10
+
+*** Keywords ***
+清除数据
+    delete_excel_columnValue    ${excel_data}    ${sheet}    8
+    delete_excel_columnValue    ${excel_data}    ${sheet}    7

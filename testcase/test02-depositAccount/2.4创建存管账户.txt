@@ -1,0 +1,62 @@
+*** Settings ***
+Suite Setup       清除数据
+Suite Teardown
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/Login.py
+Variables         ../../LibY/Tzjconfig.py
+Library           json
+Library           ExcelLibrary
+Library           Collections
+Library           RequestsLibrary
+Library           ../../LibY/TzjTools.py
+
+*** Variables ***
+${sheet}          4    # 测试数据在excel的tab
+${url}            /deposit/account    # 接口后半部分
+
+*** Test Cases ***
+create_account_001_未登录
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    1
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    ${expect_value}=    Convert To Integer    ${expect_value}
+    ${data}=    Set Variable    ${data[4]}    #获取预期结果
+    log    *************查看用户:未登录*****************
+    ${res}    Senddata    url=${url}    data=${data}    method=post
+    log    ${res}
+    log    *************断言*****************
+    check_code    ${expect_value}    ${excel_data}    ${sheet}    1
+
+create_account_002_已开户
+    log    ++++++++++++比较预期值、实际值++++++++++
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    2
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    ${data}=    Set Variable    ${data[4]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    data=${data}    method=post    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************对比结果，并将结果写入excel*****************
+    check_response_body_whole    ${expect_json}    ${excel_data}    ${sheet}    2
+
+create_account_003_未开户
+    log    ++++++++++++比较预期值、实际值++++++++++
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    3
+    ${uid}=    Set Variable    ${data[2]}    #获取用户名
+    ${expect_value}=    Set Variable    ${data[6]}    #获取预期结果
+    ${data}=    Set Variable    ${data[4]}    #获取预期结果
+    log    *************查看用户:${uid}*****************
+    ${token}    Login    ${uid}    #获取登录的token
+    ${res}    Senddata    url=${url}    data=${data}    method=post    X_Auth_Token=${token}
+    log    *************期望值转换为json格式*****************
+    ${expect_json}    To Json    ${expect_value}
+    log    *************对比结果，并将结果写入excel*****************
+    log    &{expect_json}[uid]
+    Check Response Body    uid    &{expect_json}[uid]    ${excel_data}    ${sheet}    3    #因结果其他字段是变化的，所以仅校验用户名
+
+*** Keywords ***
+清除数据
+    delete_excel_columnValue    ${excel_data}    ${sheet}    8
+    delete_excel_columnValue    ${excel_data}    ${sheet}    7

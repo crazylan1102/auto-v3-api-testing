@@ -1,0 +1,146 @@
+*** Settings ***
+Suite Setup       清除数据
+Library           ../../LibY/TzjTestLib.py
+Library           ../../LibY/TzjTools.py
+Library           ../../LibY/Tzj_sql.py
+Library           RequestsLibrary
+
+*** Variables ***
+${sheet}          0    # 在excel中所处的sheet
+
+*** Test Cases ***
+withdraw_001:使用一张提现券
+    ${row}    Set Variable    1    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    ${pre_count}    Query Voucher Count    ${data[2]}    #查询使用前的提现券
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    ${last_count}    Query Voucher Count    ${data[2]}    #查询使用后的提现券
+    ${expect_count}    Evaluate    ${pre_count}-${last_count}    #计算使用了几张提现券
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body Equal    ${expect_count}    &{expect}[count]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_002:使用多张提现券
+    ${row}    Set Variable    2    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    ${pre_count}    Query Voucher Count    ${data[2]}    #查询使用前的提现券
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    ${last_count}    Query Voucher Count    ${data[2]}    #查询使用后的提现券
+    ${expect_count}    Evaluate    ${pre_count}-${last_count}    #计算使用了几张提现券
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body Equal    ${expect_count}    &{expect}[count]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_003:使用1张提现券，扣2元手续费
+    ${row}    Set Variable    3    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Update Voucher Status    ${data[2]}    #将当前账号的提现券更新为已使用
+    Sendvoucher    ${data[2]}    #给当前账号发放提现券
+    ${pre_count}    Query Voucher Count    ${data[2]}    #查询使用前的提现券
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    ${last_count}    Query Voucher Count    ${data[2]}    #查询使用后的提现券
+    ${expect_count}    Evaluate    ${pre_count}-${last_count}    #计算使用了几张提现券
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body Equal    ${expect_count}    &{expect}[count]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_004:未使用提现券
+    ${row}    Set Variable    4    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_005:50000元手续费边界值
+    ${row}    Set Variable    5    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_006:50001元手续费边界值
+    ${row}    Set Variable    6    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_007:大额提现未设置支行边界值
+    ${row}    Set Variable    7    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Response Body    amount    &{expect}[amount]    ${excel_data}    ${sheet}    ${row}
+    Check Response Body    fee    &{expect}[fee]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_008:大额提现未设置支行
+    ${row}    Set Variable    8    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Code Msg    message    &{expect}[message]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_009:投之家余额不足
+    ${row}    Set Variable    9    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Code Msg    message    &{expect}[message]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_010:存管余额不足
+    ${row}    Set Variable    10    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Code Msg    message    &{expect}[message]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_011:到账金额小于0
+    ${row}    Set Variable    11    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+    Check Code Msg    message    &{expect}[message]    ${excel_data}    ${sheet}    ${row}
+
+withdraw_012:未登录
+    ${row}    Set Variable    12    #设置用例所处的行数
+    ${data}    Read Excel Row    ${excel_data}    ${sheet}    ${row}    #读取测试用例
+    ${token}    Login    ${data[2]}    #获取登录态的token
+    Senddata    ${data[3]}    ${data[4]}    ${data[5]}    ${token}    #请求提现接口
+    &{expect}    To Json    ${data[6]}    #预期值格式化
+    Check Code    &{expect}[code]    ${excel_data}    ${sheet}    ${row}    #校验请求code
+
+*** Keywords ***
+清除数据
+    Delete Excel ColumnValue    ${excel_data}    ${sheet}    7
+    Delete Excel ColumnValue    ${excel_data}    ${sheet}    8
+    Comment    ${debtid}    Senddebt    100    3    月    8
+    ...    #发固定普通标
+    Comment    Set Suite Variable    ${debtid}
