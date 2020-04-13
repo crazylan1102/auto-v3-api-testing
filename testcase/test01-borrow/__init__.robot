@@ -5,6 +5,7 @@ Test Setup
 Metadata          \    ${EMPTY}
 Metadata          \    ${EMPTY}
 Library           ../../LibY/TzjTestLib.py
+Library           ../../../../../Program(x86)/Python27/Lib/site-packages/ExcelLibrary/ExcelLibrary.py
 
 *** Variables ***
 

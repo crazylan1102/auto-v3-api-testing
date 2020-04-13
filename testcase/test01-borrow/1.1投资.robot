@@ -4,7 +4,7 @@ Suite Teardown
 Test Setup
 Library           ../../LibY/TzjTools.py
 Library           ../../LibY/TzjTestLib.py
-Library           ExcelLibrary
+Library           ../../LibY/ExcelLibrary.py
 Library           RequestsLibrary
 Library           ../../LibY/Tzj_sql.py
 
